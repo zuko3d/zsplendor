@@ -1,0 +1,121 @@
+#players-area {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 5px;
+    background-color: #34495e;
+    border-radius: 8px;
+    min-height: 160px; /* Reduced min-height */
+}
+
+.player-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.player-panel {
+    background-color: #ecf0f1;
+    border-radius: 6px;
+    padding: 10px;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #2c3e50;
+    position: relative;
+    border: 2px solid transparent;
+    z-index: 2; /* Above reserved cards if overlap */
+}
+
+.player-panel.active {
+    border-color: #f1c40f;
+    box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+}
+
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #bdc3c7;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.player-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.player-points {
+    font-weight: bold;
+    font-size: 18px;
+    color: #e67e22;
+}
+
+.player-resources {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.resource-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.mini-gem {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+.mini-card {
+    width: 10px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+.reserved-container {
+    display: flex;
+    gap: 10px;
+    padding: 5px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    min-width: 100px; /* Ensure space even if empty */
+    min-height: 140px;
+    align-items: center;
+    justify-content: center;
+}
+
+.reserved-placeholder {
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    text-align: center;
+    font-style: italic;
+}
+
+.nobles-collection {
+    display: flex;
+    gap: 2px;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+}
+
+.mini-noble {
+    width: 30px;
+    height: 30px;
+    background-color: #e67e22;
+    border-radius: 3px;
+    border: 1px solid white;
+}
