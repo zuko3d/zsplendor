@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;">
+    <title>Splendor</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/board.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/players.css">
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>Splendor</h1>
+            <div id="game-info">
+                <span id="turn-info">Turn: 1</span>
+                <span id="current-player">Current Player: Player 1</span>
+            </div>
+            <div id="status-message">Welcome to Splendor!</div>
+        </header>
+
+        <div id="board">
+            <div id="ai-thinking-indicator" class="hidden">
+                <div class="hourglass"></div>
+                <div class="ai-timer">00:00.0</div>
+            </div>
+            <div id="nobles-area">
+                <!-- Nobles will be rendered here -->
+            </div>
+
+            <div id="cards-area">
+                <div id="tier3-cards" class="card-row"></div>
+                <div id="tier2-cards" class="card-row"></div>
+                <div id="tier1-cards" class="card-row"></div>
+            </div>
+
+            <div id="gem-pool">
+                <div class="gem-stack" data-color="WHITE">
+                    <div class="gem gem-white"></div>
+                    <span class="count">0</span>
+                </div>
+                <div class="gem-stack" data-color="BLUE">
+                    <div class="gem gem-blue"></div>
+                    <span class="count">0</span>
+                </div>
+                <div class="gem-stack" data-color="GREEN">
+                    <div class="gem gem-green"></div>
+                    <span class="count">0</span>
+                </div>
+                <div class="gem-stack" data-color="RED">
+                    <div class="gem gem-red"></div>
+                    <span class="count">0</span>
+                </div>
+                <div class="gem-stack" data-color="BLACK">
+                    <div class="gem gem-black"></div>
+                    <span class="count">0</span>
+                </div>
+                <div class="gem-stack gem-stack-gold" data-color="GOLD">
+                    <div class="gem gem-gold"></div>
+                    <span class="count">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="players-area">
+            <!-- Players will be rendered here -->
+        </div>
+
+        <div id="action-panel">
+            <div class="action-controls">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="instant-action-check" checked> Instant Actions
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="debug-mode-check" checked> AI Debug Mode
+                </label>
+            </div>
+            <button id="confirm-action-btn" disabled>Confirm Action</button>
+            <button id="cancel-action-btn">Cancel</button>
+        </div>
+    </div>
+
+    <div id="setup-modal" class="modal">
+        <div class="modal-content">
+            <h2>New Game</h2>
+            <div class="form-group">
+                <label>Who starts?</label>
+                <select id="first-player">
+                    <option value="0" selected>Human (You)</option>
+                    <option value="1">AI</option>
+                </select>
+            </div>
+            <button id="start-game-btn">Start Game</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <div id="winner-display"></div>
+            <button id="play-again-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script src="wasm/splendor.js?v=3"></script>
+    <script src="js/ai_worker_proxy.js?v=5"></script>
+    <script src="js/wasm_interface.js?v=3"></script>
+    <script src="js/ui_manager.js?v=3"></script>
+    <script src="js/game_controller.js?v=3"></script>
+    <script src="js/main.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+.card {
+    width: 90px;
+    height: 130px;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Hover states based on action availability */
+.card.can-purchase:hover {
+    box-shadow: 0 0 15px 5px #2ecc71; /* Green glow */
+    border: 1px solid #2ecc71;
+}
+
+.card.can-reserve:hover {
+    box-shadow: 0 0 15px 5px #f1c40f; /* Gold glow */
+    border: 1px solid #f1c40f;
+}
+
+.card.cannot-act:hover {
+    box-shadow: 0 0 15px 5px #e74c3c; /* Red glow */
+    border: 1px solid #e74c3c;
+}
+
+.card.selected {
+    box-shadow: 0 0 0 3px #f1c40f;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.card-points {
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 1px black;
+}
+
+.card-bonus {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.card-cost {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cost-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    color: black;
+}
+
+.cost-circle {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Card Backgrounds based on Tier */
+.tier-1 { background: linear-gradient(to bottom right, #ecf0f1, #bdc3c7); }
+.tier-2 { background: linear-gradient(to bottom right, #f1c40f, #f39c12); }
+.tier-3 { background: linear-gradient(to bottom right, #3498db, #2980b9); }
+
+/* Noble Styles */
+.noble {
+    width: 90px;
+    height: 90px;
+    background-color: #e67e22;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.noble-points {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.noble-reqs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+}
+
+.req-item {
+    background-color: rgba(255,255,255,0.8);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    color: black;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.req-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* Deck Placeholder */
+.card.deck {
+    background: #34495e;
+    border: 2px solid #2c3e50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.card.deck:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.card.deck.selected {
+    box-shadow: 0 0 0 3px #f1c40f;
+    border-color: #f1c40f;
+}
+
+.card.deck.empty {
+    opacity: 0.5;
+    cursor: default;
+    border: 2px dashed rgba(255,255,255,0.3);
+}
+
+.card.deck.empty:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.deck-content {
+    text-align: center;
+    color: white;
+}
+
+.deck-label {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.deck-count {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* Reserved Card Full Style */
+.reserved-card-full {
+    transform: scale(0.9); /* Slightly smaller to fit */
+    margin: -5px; /* Compensate for scale */
+}
+
+.reserved-card-full:hover {
+    transform: scale(0.95) translateY(-5px);
+    z-index: 10;
+}
