@@ -73,6 +73,18 @@ class WasmInterface {
         return this.gameEngine.isCurrentPlayerHuman();
     }
     
+    needsGemDiscard() {
+        return this.gameEngine.needsGemDiscard();
+    }
+    
+    getDiscardingPlayer() {
+        return this.gameEngine.getDiscardingPlayer();
+    }
+    
+    discardGem(playerId, gemColorValue) {
+        return this.gameEngine.discardGem(playerId, gemColorValue);
+    }
+    
     // AI debug mode functions
     setAIDebugMode(enabled) {
         // This function will be used by the game controller to set debug mode

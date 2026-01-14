@@ -79,11 +79,16 @@ label {
     font-weight: bold;
 }
 
-select {
+select, input[type="number"] {
     width: 100%;
     padding: 8px;
     border-radius: 4px;
     border: 1px solid #bdc3c7;
+    box-sizing: border-box;
+}
+
+input[type="number"] {
+    font-size: 14px;
 }
 
 button {
@@ -212,4 +217,45 @@ button:disabled {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Gem Discard Modal */
+.discard-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.discard-gem-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 15px;
+    background-color: #34495e;
+    color: white;
+    border: 2px solid #bdc3c7;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 100px;
+}
+
+.discard-gem-btn:hover {
+    background-color: #2c3e50;
+    border-color: #f1c40f;
+    transform: scale(1.05);
+}
+
+.discard-gem-btn .gem {
+    width: 40px;
+    height: 40px;
+}
+
+#discard-message {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #2c3e50;
 }

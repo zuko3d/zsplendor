@@ -33,6 +33,8 @@ class UIManager {
             startGameBtn: document.getElementById('start-game-btn'),
             playAgainBtn: document.getElementById('play-again-btn'),
             firstPlayerSelect: document.getElementById('first-player'),
+            aiTimeLimitInput: document.getElementById('ai-time-limit'),
+            aiDifficultyInput: document.getElementById('ai-difficulty'),
             aiThinkingIndicator: document.getElementById('ai-thinking-indicator'),
             aiTimer: document.querySelector('.ai-timer'),
             instantActionCheck: document.getElementById('instant-action-check'),
@@ -67,17 +69,25 @@ class UIManager {
             console.log("Start Game clicked");
             // Direct DOM access to avoid any caching issues
             const select = document.getElementById('first-player');
+            const timeLimitInput = document.getElementById('ai-time-limit');
+            const difficultyInput = document.getElementById('ai-difficulty');
             
             if (select) {
                 const firstPlayerIndex = parseInt(select.value);
+                const aiTimeLimit = timeLimitInput ? parseFloat(timeLimitInput.value) : 2.5;
+                const aiDifficulty = difficultyInput ? parseInt(difficultyInput.value) : 500000;
+                
                 console.log("Starting game with first player index:", firstPlayerIndex);
+                console.log("AI Time Limit:", aiTimeLimit, "seconds");
+                console.log("AI Difficulty:", aiDifficulty, "iterations");
+                
                 this.elements.setupModal.style.display = 'none';
-                this.controller.startNewGame(firstPlayerIndex);
+                this.controller.startNewGame(firstPlayerIndex, aiTimeLimit, aiDifficulty);
             } else {
                 console.error("CRITICAL: 'first-player' select element not found!");
                 // Fallback to default (Human starts)
                 this.elements.setupModal.style.display = 'none';
-                this.controller.startNewGame(0);
+                this.controller.startNewGame(0, 2.5, 500000);
             }
         });
         

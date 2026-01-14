@@ -23,10 +23,12 @@ class GameController {
         document.getElementById('setup-modal').style.display = 'flex';
     }
     
-    startNewGame(firstPlayerIndex) {
+    startNewGame(firstPlayerIndex, aiTimeLimit = 2.5, aiDifficulty = 500000) {
         this.wasm.initGame(firstPlayerIndex);
-        // AI difficulty is always HARD (50000)
-        this.aiProxy.setDifficulty(50000000);
+        // Set AI difficulty from user input
+        this.aiProxy.setDifficulty(aiDifficulty);
+        // Set AI time limit from user input
+        this.aiProxy.setTimeLimit(aiTimeLimit);
         
         // Set initial debug mode based on checkbox
         if (this.ui.elements.aiDebugCheck) {
@@ -48,6 +50,11 @@ class GameController {
     
     updateState() {
         this.state = this.wasm.getGameState();
+        
+        // Check if we need to handle gem discard
+        if (this.wasm.needsGemDiscard()) {
+            this.showGemDiscardModal();
+        }
     }
     
     async executePlayerAction(action) {
@@ -93,7 +100,9 @@ class GameController {
             const typeInt = typeof action.type === 'object' ? action.type.value : action.type;
             
             if (typeInt === this.wasm.module.ActionType.TAKE_2_SAME.value ||
-                typeInt === this.wasm.module.ActionType.TAKE_3_DIFFERENT.value) {
+                typeInt === this.wasm.module.ActionType.TAKE_3_DIFFERENT.value ||
+                typeInt === this.wasm.module.ActionType.TAKE_2_DIFFERENT.value ||
+                typeInt === this.wasm.module.ActionType.TAKE_SINGLE.value) {
                 const gems = [];
                 // action.gems from worker is a plain array of integers
                 if (Array.isArray(action.gems)) {
@@ -262,7 +271,7 @@ class GameController {
         
         if (this.selectedGems.length > 0) {
             // Gem action
-            // Check if 2 same or 3 different
+            // Check if 2 same, 3 different, 2 different, or single
             const counts = {};
             this.selectedGems.forEach(c => counts[c] = (counts[c] || 0) + 1);
             const unique = Object.keys(counts).length;
@@ -284,6 +293,26 @@ class GameController {
                 
                 action = {
                     type: this.wasm.module.ActionType.TAKE_3_DIFFERENT,
+                    gems: gemsVector,
+                    cardId: 0, cardTier: 0, fromReserved: false, payment: this.emptyPayment()
+                };
+            } else if (unique === 2 && this.selectedGems.length === 2) {
+                // Take 2 different (only valid when exactly 2 colors available)
+                const gemsVector = new this.wasm.module.VectorGemColor();
+                this.mapColorsToEnum(this.selectedGems).forEach(g => gemsVector.push_back(g));
+                
+                action = {
+                    type: this.wasm.module.ActionType.TAKE_2_DIFFERENT,
+                    gems: gemsVector,
+                    cardId: 0, cardTier: 0, fromReserved: false, payment: this.emptyPayment()
+                };
+            } else if (unique === 1 && this.selectedGems.length === 1) {
+                // Take single (only valid when exactly 1 color available)
+                const gemsVector = new this.wasm.module.VectorGemColor();
+                this.mapColorsToEnum(this.selectedGems).forEach(g => gemsVector.push_back(g));
+                
+                action = {
+                    type: this.wasm.module.ActionType.TAKE_SINGLE,
                     gems: gemsVector,
                     cardId: 0, cardTier: 0, fromReserved: false, payment: this.emptyPayment()
                 };
@@ -350,7 +379,9 @@ class GameController {
             // Trigger animations before execution (or in parallel)
             // We need to know what action it is to animate correctly
             if (action.type === this.wasm.module.ActionType.TAKE_2_SAME ||
-                action.type === this.wasm.module.ActionType.TAKE_3_DIFFERENT) {
+                action.type === this.wasm.module.ActionType.TAKE_3_DIFFERENT ||
+                action.type === this.wasm.module.ActionType.TAKE_2_DIFFERENT ||
+                action.type === this.wasm.module.ActionType.TAKE_SINGLE) {
                 // Convert vector back to array for animation
                 const gems = [];
                 for(let i=0; i<action.gems.size(); i++) gems.push(this.getGemColorString(action.gems.get(i)));
@@ -407,8 +438,14 @@ class GameController {
             const counts = {};
             this.selectedGems.forEach(c => counts[c] = (counts[c] || 0) + 1);
             const unique = Object.keys(counts).length;
-            if (unique === 1 && this.selectedGems.length === 2) return true;
-            if (unique === 3 && this.selectedGems.length === 3) return true;
+            
+            // Count available gem colors in the pool
+            const availableColors = this.countAvailableGemColors();
+            
+            if (unique === 1 && this.selectedGems.length === 2) return true; // TAKE_2_SAME
+            if (unique === 3 && this.selectedGems.length === 3) return true; // TAKE_3_DIFFERENT
+            if (unique === 2 && this.selectedGems.length === 2 && availableColors === 2) return true; // TAKE_2_DIFFERENT (only when exactly 2 colors available)
+            if (unique === 1 && this.selectedGems.length === 1 && availableColors === 1) return true; // TAKE_SINGLE (only when exactly 1 color available)
             return false;
         }
         if (this.selectedCard) return true; // Can always reserve if not affordable
@@ -422,7 +459,18 @@ class GameController {
     }
     
     getActionDescription() {
-        if (this.selectedGems.length > 0) return "Take Gems";
+        if (this.selectedGems.length > 0) {
+            const counts = {};
+            this.selectedGems.forEach(c => counts[c] = (counts[c] || 0) + 1);
+            const unique = Object.keys(counts).length;
+            const availableColors = this.countAvailableGemColors();
+            
+            if (unique === 1 && this.selectedGems.length === 2) return "Take 2 Same";
+            if (unique === 3 && this.selectedGems.length === 3) return "Take 3 Different";
+            if (unique === 2 && this.selectedGems.length === 2 && availableColors === 2) return "Take 2 Different";
+            if (unique === 1 && this.selectedGems.length === 1 && availableColors === 1) return "Take Single";
+            return "Invalid Selection";
+        }
         if (this.selectedCard) {
             if (this.selectedCard.id === -1) return "Reserve from Deck";
             
@@ -504,5 +552,88 @@ class GameController {
         });
         payment.gold = goldNeeded;
         return payment;
+    }
+    
+    countAvailableGemColors() {
+        // Count how many non-gold gem colors have at least 1 gem available
+        let count = 0;
+        const colors = ['white', 'blue', 'green', 'red', 'black'];
+        colors.forEach(color => {
+            if (this.state.gemPool[color] > 0) count++;
+        });
+        return count;
+    }
+    
+    showGemDiscardModal() {
+        const playerId = this.wasm.getDiscardingPlayer();
+        const player = this.state.players[playerId];
+        const totalGems = player.gems.white + player.gems.blue + player.gems.green +
+                         player.gems.red + player.gems.black + player.gems.gold;
+        const toDiscard = totalGems - 10;
+        
+        const modal = document.getElementById('gem-discard-modal');
+        const message = document.getElementById('discard-message');
+        const optionsContainer = document.getElementById('discard-gem-options');
+        
+        message.textContent = `You have ${totalGems} gems (limit is 10). Select a gem to discard (${toDiscard} remaining):`;
+        
+        // Clear previous options
+        optionsContainer.innerHTML = '';
+        
+        // Create buttons for each gem color the player has
+        const colors = ['white', 'blue', 'green', 'red', 'black', 'gold'];
+        const colorNames = ['WHITE', 'BLUE', 'GREEN', 'RED', 'BLACK', 'GOLD'];
+        
+        colors.forEach((color, index) => {
+            const count = player.gems[color];
+            if (count > 0) {
+                const button = document.createElement('button');
+                button.className = 'discard-gem-btn';
+                button.innerHTML = `
+                    <div class="gem gem-${color}"></div>
+                    <span>${colorNames[index]} (${count})</span>
+                `;
+                button.onclick = () => this.onDiscardGem(colorNames[index]);
+                optionsContainer.appendChild(button);
+            }
+        });
+        
+        modal.style.display = 'flex';
+    }
+    
+    async onDiscardGem(colorName) {
+        const colorMap = {
+            'WHITE': this.wasm.module.GemColor.WHITE.value,
+            'BLUE': this.wasm.module.GemColor.BLUE.value,
+            'GREEN': this.wasm.module.GemColor.GREEN.value,
+            'RED': this.wasm.module.GemColor.RED.value,
+            'BLACK': this.wasm.module.GemColor.BLACK.value,
+            'GOLD': this.wasm.module.GemColor.GOLD.value
+        };
+        
+        const playerId = this.wasm.getDiscardingPlayer();
+        const success = this.wasm.discardGem(playerId, colorMap[colorName]);
+        
+        if (success) {
+            this.updateState();
+            this.ui.render(this.state);
+            
+            // Check if we still need to discard more gems
+            if (!this.wasm.needsGemDiscard()) {
+                // Close modal
+                document.getElementById('gem-discard-modal').style.display = 'none';
+                
+                // Check if game is over
+                if (this.wasm.isGameOver()) {
+                    this.endGame();
+                } else {
+                    // Check if it's now AI's turn
+                    await this.checkAITurn();
+                }
+            } else {
+                // Update the modal with new counts
+                this.showGemDiscardModal();
+            }
+        }
     }
 }

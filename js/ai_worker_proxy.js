@@ -12,7 +12,8 @@ class AIWorkerProxy {
         this.requestIdCounter = 0;
         this.progressCallback = null;
         this.useWorker = typeof Worker !== 'undefined';
-        this.difficulty = 50000; // Default HARD
+        this.difficulty = 500000; // Default difficulty
+        this.timeLimit = 2.5; // Default time limit in seconds
         this.debugMode = false; // Debug mode flag
         
         // Fallback: Main thread AI interface (if workers not available)
@@ -144,7 +145,8 @@ class AIWorkerProxy {
             id: requestId,
             gameState: gameState,
             playerId: playerId,
-            difficulty: this.difficulty
+            difficulty: this.difficulty,
+            timeLimit: this.timeLimit
         });
         
         return promise;
@@ -311,6 +313,22 @@ class AIWorkerProxy {
             
             this.fallbackWasm.aiEngine.setDifficulty(diffEnum);
         }
+    }
+    
+    /**
+     * Set AI time limit
+     * @param {number} timeLimit - Time limit in seconds
+     */
+    setTimeLimit(timeLimit) {
+        this.timeLimit = timeLimit;
+        
+        if (this.useWorker && this.worker) {
+            this.worker.postMessage({
+                type: 'SET_TIME_LIMIT',
+                timeLimit: timeLimit
+            });
+        }
+        // Note: Fallback mode doesn't support time limits currently
     }
     
     /**

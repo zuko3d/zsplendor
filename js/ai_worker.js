@@ -7,7 +7,8 @@
 let wasmModule = null;
 let aiEngine = null;
 let isInitialized = false;
-let currentDifficulty = 5000; // Default HARD
+let currentDifficulty = 500000; // Default difficulty
+let currentTimeLimit = 2.5; // Default time limit in seconds
 let debugMode = false; // Debug mode flag
 
 /**
@@ -28,6 +29,10 @@ self.onmessage = async function(event) {
                 
             case 'SET_DIFFICULTY':
                 handleSetDifficulty(message.difficulty);
+                break;
+                
+            case 'SET_TIME_LIMIT':
+                handleSetTimeLimit(message.timeLimit);
                 break;
                 
             case 'SET_DEBUG_MODE':
@@ -113,7 +118,7 @@ async function handleComputeAction(message) {
         throw new Error('Worker not initialized');
     }
     
-    const { id, gameState, playerId, difficulty } = message;
+    const { id, gameState, playerId, difficulty, timeLimit } = message;
     
     try {
         // Update difficulty if changed
@@ -121,7 +126,14 @@ async function handleComputeAction(message) {
             handleSetDifficulty(difficulty);
         }
         
+        // Update time limit if changed
+        if (timeLimit && timeLimit !== currentTimeLimit) {
+            handleSetTimeLimit(timeLimit);
+        }
+        
         const startTime = Date.now();
+        
+        console.log('[AI Worker] Starting AI computation with difficulty:', currentDifficulty, 'iterations, time limit:', currentTimeLimit, 'seconds');
         
         // Convert game state to JSON string
         const stateJSON = JSON.stringify(gameState);
@@ -140,6 +152,8 @@ async function handleComputeAction(message) {
         
         // Get actual iterations
         const actualIterations = aiEngine.getLastIterationCount();
+        
+        console.log('[AI Worker] AI computation completed:', actualIterations, 'iterations in', timeMs, 'ms');
 
         // Send result back to main thread
         self.postMessage({
@@ -172,17 +186,42 @@ function handleSetDifficulty(difficulty) {
     
     currentDifficulty = difficulty;
     
+    console.log('[AI Worker] Setting difficulty to:', difficulty);
+    
     // Map to enum
     let diffEnum;
     if (difficulty <= 100) {
         diffEnum = wasmModule.AIDifficulty.EASY;
+        console.log('[AI Worker] Mapped to EASY (1000 iterations)');
     } else if (difficulty <= 1000) {
         diffEnum = wasmModule.AIDifficulty.MEDIUM;
+        console.log('[AI Worker] Mapped to MEDIUM (10000 iterations)');
     } else {
         diffEnum = wasmModule.AIDifficulty.HARD;
+        console.log('[AI Worker] Mapped to HARD (50000 iterations)');
     }
     
     aiEngine.setDifficulty(diffEnum);
+    
+    // CRITICAL: Also set the iteration limit directly to override the enum
+    console.log('[AI Worker] Setting iteration limit directly to:', difficulty);
+    aiEngine.setIterationLimit(difficulty);
+}
+
+/**
+ * Set AI time limit
+ */
+function handleSetTimeLimit(timeLimit) {
+    if (!isInitialized) {
+        return;
+    }
+    
+    currentTimeLimit = timeLimit;
+    console.log('[AI Worker] Setting time limit to:', timeLimit, 'seconds');
+    // Convert seconds to milliseconds for C++ engine
+    const timeLimitMs = Math.round(timeLimit * 1000);
+    console.log('[AI Worker] Time limit in milliseconds:', timeLimitMs);
+    aiEngine.setTimeLimit(timeLimitMs);
 }
 
 /**
