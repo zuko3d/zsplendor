@@ -23,8 +23,8 @@ class ArenaController {
     
     // Bot management
     addBot(config) {
-        if (this.bots.length >= 4) {
-            throw new Error("Maximum 4 bots allowed");
+        if (this.bots.length >= 8) {
+            throw new Error("Maximum 8 bots allowed");
         }
         
         this.bots.push(config);
