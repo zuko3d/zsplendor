@@ -48,32 +48,38 @@ self.addEventListener('message', async (e) => {
             
             const { matchupId, bot1, bot2, bot1Index, bot2Index, gamesPerMatchup } = data;
             
-            // Create progress callback that posts messages back to main thread
-            const progressCallback = (completed, total) => {
+            let allResults = [];
+            
+            // Run games one at a time to get results immediately
+            for (let gameNum = 0; gameNum < gamesPerMatchup; gameNum++) {
+                const startingPlayer = gameNum % 2;
+                
+                // Run single game (gamesPerMatchup = 1)
+                const resultJSON = arenaWrapper.runSingleMatchup(
+                    bot1,
+                    bot2,
+                    bot1Index,
+                    bot2Index,
+                    1  // Run just 1 game
+                );
+                
+                const result = JSON.parse(resultJSON);
+                const gameResult = result.results[0]; // Get the single game result
+                allResults.push(gameResult);
+                
+                // Send game complete with result immediately
                 self.postMessage({
                     type: 'GAME_COMPLETE',
                     matchupId,
-                    completed,
-                    total
+                    gameResult: gameResult
                 });
-            };
+            }
             
-            // Run the matchup with progress callback
-            const resultJSON = arenaWrapper.runSingleMatchupWithProgress(
-                bot1,
-                bot2,
-                bot1Index,
-                bot2Index,
-                gamesPerMatchup,
-                progressCallback
-            );
-            
-            const result = JSON.parse(resultJSON);
-            
+            // Send matchup complete
             self.postMessage({
                 type: 'MATCHUP_COMPLETE',
                 matchupId,
-                results: result.results
+                results: allResults
             });
         } catch (error) {
             self.postMessage({

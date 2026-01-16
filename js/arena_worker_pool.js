@@ -62,13 +62,14 @@ class ArenaWorkerPool {
     }
     
     handleWorkerMessage(workerIndex, e) {
-        const { type, matchupId, results, error, completed, total } = e.data;
+        const { type, matchupId, results, error, gameResult } = e.data;
         
         if (type === 'GAME_COMPLETE') {
-            // Individual game completed - increment global counter
+            // Individual game completed - increment global counter and pass result
             this.completedGames++;
             if (this.progressCallback) {
-                this.progressCallback(this.completedGames, this.totalGames);
+                // Pass game result for immediate stats update
+                this.progressCallback(this.completedGames, this.totalGames, gameResult);
             }
         }
         else if (type === 'MATCHUP_COMPLETE') {

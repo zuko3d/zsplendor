@@ -362,28 +362,36 @@ class ArenaUIManager {
         
         progress.classList.remove('hidden');
         runBtn.disabled = true;
-        resultsSection.style.display = 'none';
+        
+        // Show results section immediately with initial empty stats
+        resultsSection.style.display = 'block';
+        this.renderLiveResults();
         
         // Initialize progress display
         document.getElementById('progress-matches').textContent = `0 / ${totalGames} games`;
         document.getElementById('progress-bar').style.width = '0%';
         
         try {
-            // Progress callback receives actual game counts now
+            // Progress callback for progress bar updates
             const progressCallback = (completedGames, totalGames) => {
                 const percentage = (completedGames / totalGames * 100).toFixed(1);
                 document.getElementById('progress-bar').style.width = `${percentage}%`;
                 document.getElementById('progress-matches').textContent = `${completedGames} / ${totalGames} games`;
             };
             
-            const results = await this.controller.runTournament(gamesPerMatchup, progressCallback);
+            // Stats callback for table updates (called when game results arrive)
+            const statsCallback = () => {
+                this.renderLiveResults();
+            };
+            
+            const results = await this.controller.runTournament(gamesPerMatchup, progressCallback, statsCallback);
             
             // Update to 100%
             document.getElementById('progress-bar').style.width = '100%';
             document.getElementById('progress-matches').textContent = `${totalGames} / ${totalGames} games`;
             
+            // Final render with complete results
             this.renderResults(results);
-            resultsSection.style.display = 'block';
         } catch (e) {
             alert("Tournament failed: " + e.message);
             console.error(e);
@@ -393,9 +401,22 @@ class ArenaUIManager {
         }
     }
     
+    renderLiveResults() {
+        const stats = this.controller.getLiveStats();
+        if (!stats) return;
+        
+        this.renderStatsTable(stats);
+    }
+    
     renderResults(results) {
-        const container = document.getElementById('results-container');
         const stats = this.controller.calculateWinRates();
+        if (!stats) return;
+        
+        this.renderStatsTable(stats);
+    }
+    
+    renderStatsTable(stats) {
+        const container = document.getElementById('results-container');
         
         let html = `
             <table class="results-table">
@@ -403,9 +424,8 @@ class ArenaUIManager {
                     <tr>
                         <th>Bot Name</th>
                         <th>Games</th>
-                        <th>Wins</th>
-                        <th>Losses</th>
                         <th>Win Rate</th>
+                        <th>MDE (±%)</th>
                         <th>Avg Win Turns</th>
                         <th>Avg Points</th>
                         <th>Avg Turns</th>
@@ -419,14 +439,13 @@ class ArenaUIManager {
                 <tr>
                     <td><strong>${s.name}</strong></td>
                     <td>${s.gamesPlayed}</td>
-                    <td>${s.wins}</td>
-                    <td>${s.losses}</td>
                     <td>
                         <div class="winrate-container">
                             <div class="winrate-bar" style="width: ${s.winRate}%"></div>
                             <span>${s.winRate}%</span>
                         </div>
                     </td>
+                    <td>±${s.mde}%</td>
                     <td>${s.avgWinTurns}</td>
                     <td>${s.avgPoints}</td>
                     <td>${s.avgGameLength}</td>

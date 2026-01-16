@@ -10,6 +10,7 @@ class ArenaController {
         this.workerCount = 8;
         this.globalIterationsLimit = 100000;
         this.globalTimeLimit = 2500; // milliseconds
+        this.liveResults = null; // Live results that update in real-time
     }
     
     // Initialize arena wrapper
@@ -108,7 +109,7 @@ class ArenaController {
     }
     
     // Tournament execution
-    async runTournament(gamesPerMatchup, progressCallback) {
+    async runTournament(gamesPerMatchup, progressCallback, statsCallback) {
         if (this.bots.length < 2) {
             throw new Error("Need at least 2 bots to run tournament");
         }
@@ -117,7 +118,7 @@ class ArenaController {
         
         try {
             if (this.useParallel && this.workerCount > 1) {
-                return await this.runTournamentParallel(gamesPerMatchup, progressCallback);
+                return await this.runTournamentParallel(gamesPerMatchup, progressCallback, statsCallback);
             } else {
                 return await this.runTournamentSequential(gamesPerMatchup);
             }
@@ -139,12 +140,15 @@ class ArenaController {
         return this.results;
     }
     
-    async runTournamentParallel(gamesPerMatchup, progressCallback) {
+    async runTournamentParallel(gamesPerMatchup, progressCallback, statsCallback) {
         // Initialize worker pool if needed
         if (!this.workerPool) {
             this.workerPool = new ArenaWorkerPool(this.workerCount);
             await this.workerPool.initialize();
         }
+        
+        // Initialize live results
+        this.initializeLiveResults();
         
         // Create tasks for all matchups
         const tasks = [];
@@ -161,11 +165,29 @@ class ArenaController {
             }
         }
         
-        // Run tasks in parallel
-        const matchupResults = await this.workerPool.runTasks(tasks, progressCallback);
+        // Wrap progress callback to update live results
+        const wrappedCallback = (completedGames, totalGames, gameResult) => {
+            // Always call progress callback for UI updates
+            if (progressCallback) {
+                progressCallback(completedGames, totalGames);
+            }
+            
+            // Update live results and notify when we have a game result
+            if (gameResult) {
+                this.updateLiveResults(gameResult);
+                // Notify that stats have been updated
+                if (statsCallback) {
+                    statsCallback();
+                }
+            }
+        };
         
-        // Aggregate results
+        // Run tasks in parallel
+        const matchupResults = await this.workerPool.runTasks(tasks, wrappedCallback);
+        
+        // Aggregate final results
         this.results = this.aggregateResults(matchupResults, gamesPerMatchup);
+        this.liveResults = this.results; // Sync live results with final
         return this.results;
     }
     
@@ -265,29 +287,112 @@ class ArenaController {
         return results;
     }
     
-    // Results processing
-    calculateWinRates() {
-        if (!this.results) return null;
+    initializeLiveResults() {
+        this.liveResults = {
+            bots: this.bots.map(b => ({ name: b.name })),
+            matches: [],
+            wins: new Array(this.bots.length).fill(0),
+            losses: new Array(this.bots.length).fill(0),
+            gamesPlayed: new Array(this.bots.length).fill(0),
+            totalPoints: new Array(this.bots.length).fill(0),
+            totalWinTurns: new Array(this.bots.length).fill(0),
+            avgGameLength: new Array(this.bots.length).fill(0),
+            avgPointsScored: new Array(this.bots.length).fill(0),
+            avgWinTurns: new Array(this.bots.length).fill(0)
+        };
+    }
+    
+    updateLiveResults(gameResult) {
+        if (!this.liveResults) return;
         
-        return this.results.bots.map((bot, idx) => {
-            const wins = this.results.wins[idx];
-            const losses = this.results.losses[idx];
-            const gamesPlayed = this.results.gamesPlayed[idx];
+        const bot1Idx = gameResult.bot1Index;
+        const bot2Idx = gameResult.bot2Index;
+        
+        // Add match to history
+        this.liveResults.matches.push(gameResult);
+        
+        // Update game counts
+        this.liveResults.gamesPlayed[bot1Idx]++;
+        this.liveResults.gamesPlayed[bot2Idx]++;
+        
+        // Update wins/losses
+        if (gameResult.winner === 0) {
+            this.liveResults.wins[bot1Idx]++;
+            this.liveResults.losses[bot2Idx]++;
+            this.liveResults.totalWinTurns[bot1Idx] += gameResult.turnCount;
+        } else {
+            this.liveResults.losses[bot1Idx]++;
+            this.liveResults.wins[bot2Idx]++;
+            this.liveResults.totalWinTurns[bot2Idx] += gameResult.turnCount;
+        }
+        
+        // Update points
+        this.liveResults.totalPoints[bot1Idx] += gameResult.bot1Points;
+        this.liveResults.totalPoints[bot2Idx] += gameResult.bot2Points;
+        
+        // Recalculate averages
+        this.recalculateLiveAverages();
+    }
+    
+    recalculateLiveAverages() {
+        if (!this.liveResults) return;
+        
+        const totalTurns = new Array(this.bots.length).fill(0);
+        this.liveResults.matches.forEach(game => {
+            totalTurns[game.bot1Index] += game.turnCount;
+            totalTurns[game.bot2Index] += game.turnCount;
+        });
+        
+        for (let i = 0; i < this.bots.length; i++) {
+            if (this.liveResults.gamesPlayed[i] > 0) {
+                this.liveResults.avgPointsScored[i] = this.liveResults.totalPoints[i] / this.liveResults.gamesPlayed[i];
+                this.liveResults.avgGameLength[i] = totalTurns[i] / this.liveResults.gamesPlayed[i];
+            }
+            if (this.liveResults.wins[i] > 0) {
+                this.liveResults.avgWinTurns[i] = this.liveResults.totalWinTurns[i] / this.liveResults.wins[i];
+            }
+        }
+    }
+    
+    // Results processing
+    calculateWinRates(useResults = null) {
+        const results = useResults || this.results;
+        if (!results) return null;
+        
+        return results.bots.map((bot, idx) => {
+            const wins = results.wins[idx];
+            const losses = results.losses[idx];
+            const gamesPlayed = results.gamesPlayed[idx];
             const total = wins + losses;
-            const winRate = total > 0 ? (wins / total * 100).toFixed(1) : 0;
-            const avgWinTurns = this.results.avgWinTurns[idx] > 0 ? this.results.avgWinTurns[idx].toFixed(1) : 'N/A';
+            const winRate = total > 0 ? wins / total : 0;
+            const avgWinTurns = results.avgWinTurns[idx] > 0 ? results.avgWinTurns[idx].toFixed(1) : 'N/A';
+            
+            // Calculate Margin of Error (95% confidence interval)
+            // MDE = 1.96 * sqrt(p * (1-p) / n)
+            // where p is win rate and n is number of games
+            let mde = 0;
+            if (total > 0) {
+                const p = winRate;
+                const standardError = Math.sqrt(p * (1 - p) / total);
+                mde = 1.96 * standardError * 100; // Convert to percentage
+            }
             
             return {
                 name: bot.name,
                 wins,
                 losses,
                 gamesPlayed,
-                winRate: parseFloat(winRate),
-                avgPoints: this.results.avgPointsScored[idx].toFixed(1),
-                avgGameLength: this.results.avgGameLength[idx].toFixed(1),
+                winRate: (winRate * 100).toFixed(1),
+                mde: mde.toFixed(1),
+                avgPoints: results.avgPointsScored[idx].toFixed(1),
+                avgGameLength: results.avgGameLength[idx].toFixed(1),
                 avgWinTurns: avgWinTurns
             };
         });
+    }
+    
+    getLiveStats() {
+        return this.calculateWinRates(this.liveResults);
     }
     
     getHeadToHead(bot1Idx, bot2Idx) {
