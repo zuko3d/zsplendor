@@ -9,11 +9,13 @@
     <link rel="stylesheet" href="css/board.css">
     <link rel="stylesheet" href="css/cards.css">
     <link rel="stylesheet" href="css/players.css">
+    <link rel="stylesheet" href="css/arena.css">
 </head>
 <body>
     <div id="game-container">
         <header>
             <h1>Splendor</h1>
+            <button id="arena-btn" class="header-btn" style="margin-right: 20px; padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">🏆 Bot Arena</button>
             <div id="game-info">
                 <span id="turn-info">Turn: 1</span>
                 <span id="current-player">Current Player: Player 1</span>
@@ -127,6 +129,9 @@
     <script src="js/wasm_interface.js?v=3"></script>
     <script src="js/ui_manager.js?v=3"></script>
     <script src="js/game_controller.js?v=3"></script>
+    <script src="js/arena_worker_pool.js?v=1"></script>
+    <script src="js/arena_controller.js?v=1"></script>
+    <script src="js/arena_ui_manager.js?v=1"></script>
     <script src="js/main.js?v=3"></script>
 </body>
 </html>
