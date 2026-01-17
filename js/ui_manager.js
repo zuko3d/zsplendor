@@ -75,7 +75,7 @@ class UIManager {
             if (select) {
                 const firstPlayerIndex = parseInt(select.value);
                 const aiTimeLimit = timeLimitInput ? parseFloat(timeLimitInput.value) : 2.5;
-                const aiDifficulty = difficultyInput ? parseInt(difficultyInput.value) : 500000;
+                const aiDifficulty = difficultyInput ? parseInt(difficultyInput.value) : 5000000;
                 
                 console.log("Starting game with first player index:", firstPlayerIndex);
                 console.log("AI Time Limit:", aiTimeLimit, "seconds");
@@ -87,7 +87,7 @@ class UIManager {
                 console.error("CRITICAL: 'first-player' select element not found!");
                 // Fallback to default (Human starts)
                 this.elements.setupModal.style.display = 'none';
-                this.controller.startNewGame(0, 2.5, 500000);
+                this.controller.startNewGame(0, 2.5, 5000000);
             }
         });
         

@@ -7,7 +7,7 @@
 let wasmModule = null;
 let aiEngine = null;
 let isInitialized = false;
-let currentDifficulty = 500000; // Default difficulty
+let currentDifficulty = 5000000; // Default difficulty
 let currentTimeLimit = 2.5; // Default time limit in seconds
 let debugMode = false; // Debug mode flag
 
@@ -198,7 +198,7 @@ function handleSetDifficulty(difficulty) {
         console.log('[AI Worker] Mapped to MEDIUM (10000 iterations)');
     } else {
         diffEnum = wasmModule.AIDifficulty.HARD;
-        console.log('[AI Worker] Mapped to HARD (50000 iterations)');
+        console.log('[AI Worker] Mapped to HARD (5000000 iterations)');
     }
     
     aiEngine.setDifficulty(diffEnum);

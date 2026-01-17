@@ -23,7 +23,7 @@ class GameController {
         document.getElementById('setup-modal').style.display = 'flex';
     }
     
-    startNewGame(firstPlayerIndex, aiTimeLimit = 2.5, aiDifficulty = 500000) {
+    startNewGame(firstPlayerIndex, aiTimeLimit = 2.5, aiDifficulty = 5000000) {
         this.wasm.initGame(firstPlayerIndex);
         // Set AI difficulty from user input
         this.aiProxy.setDifficulty(aiDifficulty);

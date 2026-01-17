@@ -12,7 +12,7 @@ class AIWorkerProxy {
         this.requestIdCounter = 0;
         this.progressCallback = null;
         this.useWorker = typeof Worker !== 'undefined';
-        this.difficulty = 500000; // Default difficulty
+        this.difficulty = 5000000; // Default difficulty
         this.timeLimit = 2.5; // Default time limit in seconds
         this.debugMode = false; // Debug mode flag
         
