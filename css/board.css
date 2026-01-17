@@ -7,7 +7,8 @@
     background-color: #c0392b;
     border-radius: 8px;
     position: relative;
-    min-height: 0; /* Allow shrinking */
+    min-height: 550px; /* Ensure minimum height to show all content including gem pool */
+    overflow-y: auto; /* Allow scrolling if content doesn't fit */
 }
 
 #nobles-area {
@@ -24,6 +25,7 @@
     flex-direction: column;
     justify-content: space-around;
     gap: 5px;
+    min-height: 0; /* Allow shrinking within scrollable board */
 }
 
 .card-row {
@@ -41,6 +43,8 @@
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
+    flex-shrink: 0; /* Prevent gem pool from shrinking */
+    margin-top: auto; /* Push to bottom of board */
 }
 
 .gem-stack {

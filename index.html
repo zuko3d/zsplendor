@@ -15,7 +15,10 @@
     <div id="game-container">
         <header>
             <h1>Splendor</h1>
-            <button id="arena-btn" class="header-btn" style="margin-right: 20px; padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">🏆 Bot Arena</button>
+            <div class="header-buttons">
+                <button id="unwind-btn" class="header-btn" disabled title="Undo last action">↶ Unwind</button>
+                <button id="arena-btn" class="header-btn" style="background: #4CAF50;">🏆 Bot Arena</button>
+            </div>
             <div id="game-info">
                 <span id="turn-info">Turn: 1</span>
                 <span id="current-player">Current Player: Player 1</span>

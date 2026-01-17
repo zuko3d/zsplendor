@@ -10,6 +10,10 @@ class GameController {
         this.selectedReservedCard = null;
         this.actionType = null; // 'TAKE_GEMS', 'RESERVE', 'PURCHASE'
         
+        // Game state history for unwind feature
+        this.stateHistory = [];
+        this.maxHistorySize = 50; // Keep last 50 states
+        
         // Expose for global access (e.g. onclick handlers in generated HTML)
         window.gameController = this;
     }
@@ -35,6 +39,9 @@ class GameController {
             this.aiProxy.setDebugMode(this.ui.elements.aiDebugCheck.checked);
         }
         
+        // Clear history for new game
+        this.stateHistory = [];
+        
         this.updateState();
         this.ui.render(this.state);
         this.checkAITurn();
@@ -57,7 +64,51 @@ class GameController {
         }
     }
     
+    saveStateToHistory() {
+        // Deep copy the current state
+        const stateCopy = JSON.parse(JSON.stringify(this.state));
+        this.stateHistory.push(stateCopy);
+        
+        // Limit history size
+        if (this.stateHistory.length > this.maxHistorySize) {
+            this.stateHistory.shift();
+        }
+        
+        // Update UI to reflect unwind availability
+        this.ui.updateUnwindButton(this.canUnwind());
+    }
+    
+    canUnwind() {
+        // Can unwind if there's history and it's human player's turn
+        return this.stateHistory.length > 0 && this.isHumanTurn();
+    }
+    
+    unwindAction() {
+        if (!this.canUnwind()) {
+            return;
+        }
+        
+        // Get the previous state
+        const previousState = this.stateHistory.pop();
+        
+        // Restore the state to the game engine
+        // We need to reinitialize the game with the previous state
+        // Since we don't have a direct "setState" method, we'll use the JSON state
+        this.wasm.gameEngine.setStateFromJSON(JSON.stringify(previousState));
+        
+        // Update local state
+        this.updateState();
+        this.clearSelection();
+        this.ui.render(this.state);
+        this.ui.updateUnwindButton(this.canUnwind());
+    }
+    
     async executePlayerAction(action) {
+        // Save state before executing action (only for human players)
+        if (this.isHumanTurn()) {
+            this.saveStateToHistory();
+        }
+        
         const success = this.wasm.executeAction(action);
         if (success) {
             this.updateState();
@@ -70,6 +121,10 @@ class GameController {
                 await this.checkAITurn();
             }
         } else {
+            // Remove the saved state if action failed
+            if (this.isHumanTurn() && this.stateHistory.length > 0) {
+                this.stateHistory.pop();
+            }
             alert("Invalid action!");
         }
         return success;

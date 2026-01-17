@@ -27,6 +27,7 @@ class UIManager {
             actionPanel: document.getElementById('action-panel'),
             confirmBtn: document.getElementById('confirm-action-btn'),
             cancelBtn: document.getElementById('cancel-action-btn'),
+            unwindBtn: document.getElementById('unwind-btn'),
             setupModal: document.getElementById('setup-modal'),
             gameOverModal: document.getElementById('game-over-modal'),
             winnerDisplay: document.getElementById('winner-display'),
@@ -63,6 +64,7 @@ class UIManager {
         // Action buttons
         this.elements.confirmBtn.addEventListener('click', () => this.controller.onConfirmAction());
         this.elements.cancelBtn.addEventListener('click', () => this.controller.onCancelAction());
+        this.elements.unwindBtn.addEventListener('click', () => this.controller.unwindAction());
         
         // Modal buttons
         this.elements.startGameBtn.addEventListener('click', () => {
@@ -586,5 +588,11 @@ class UIManager {
                 resolve();
             }, 800);
         });
+    }
+    
+    updateUnwindButton(canUnwind) {
+        if (this.elements.unwindBtn) {
+            this.elements.unwindBtn.disabled = !canUnwind;
+        }
     }
 }
